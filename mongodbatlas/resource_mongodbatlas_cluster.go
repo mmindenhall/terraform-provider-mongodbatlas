@@ -12,6 +12,11 @@ import (
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
+var sharedClusterNames = map[string]struct{} {
+	"M2": struct{}{},
+	"M5": struct{}{},
+}
+
 func resourceCluster() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceClusterCreate,
@@ -71,6 +76,11 @@ func resourceCluster() *schema.Resource {
 			"disk_size_gb": &schema.Schema{
 				Type:     schema.TypeFloat,
 				Optional: true,
+				// suppress size diffs for shared RAM clusters
+				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+					_, isShared := sharedClusterNames[d.Get("size").(string)]
+					return isShared
+				},
 			},
 			"replication_factor": &schema.Schema{
 				Type:     schema.TypeInt,
